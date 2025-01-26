@@ -40,6 +40,16 @@ def rotate_bird(bird):
     new_bird = pg.transform.rotate(bird, bird_movement*3)
     return new_bird
 
+def bird_animation():
+    new_bird = bird_frames[bird_index]
+    new_bird_rect = new_bird.get_rect(center= (45, bird_rect.centery))
+    return bird_surface, bird_rect
+
+def score_display():
+    score_surface = game_font.render(str(int(score)), True, (255, 255, 255))
+    score_rect = score_surface.get_rect(center=(288, 45))
+    window.blit(score_surface, score_rect)
+
 
 pg.init()
 
@@ -48,6 +58,9 @@ pg.init()
 gravity = 0.25
 bird_movement = 0
 game_active = True
+score = 0
+high_score = 0
+
 
 window = pg.display.set_mode((576,700))
 clock = pg.time.Clock()
@@ -55,6 +68,7 @@ bg_surface = pg.image.load("assets/background-day.png").convert()
 #set default image size
 SURFACE_IMAGE_SCALAR = (576, 650)
 bg_surface = pg.transform.scale(bg_surface, SURFACE_IMAGE_SCALAR)
+game_font = pg.font.Font("04B_19.TTF", 40)
 
 
 #
@@ -65,9 +79,19 @@ FLOOR_DEFAULT_SIZE = (336,150)
 floor_surface = pg.transform.scale(floor_surface, FLOOR_DEFAULT_SIZE)
 floor_x_pox = 0
 
-bird_surface = pg.image.load("assets/bluebird-midflap.png").convert()
-bird_surface = pg.transform.scale2x(bird_surface)
-bird_rect = bird_surface.get_rect(center = (45, 350))
+bird_downflap = pg.transform.scale2x(pg.image.load('assets/bluebird-downflap.png').convert_alpha())
+bird_midflap = pg.transform.scale2x(pg.image.load('assets/bluebird-midflap.png').convert_alpha())
+bird_upflap = pg.transform.scale2x(pg.image.load('assets/bluebird-upflap.png').convert_alpha())
+bird_frames = [bird_downflap,bird_midflap,bird_upflap]
+bird_index = 0
+bird_surface = bird_frames[bird_index]
+bird_rect = bird_surface.get_rect(center = (45,350))
+BIRDFLAP = pg.USEREVENT + 1
+pg.time.set_timer(BIRDFLAP, 200)
+
+# bird_surface = pg.image.load("assets/bluebird-midflap.png").convert()
+# bird_surface = pg.transform.scale2x(bird_surface)
+# bird_rect = bird_surface.get_rect(center = (45, 350))
 
 pipe_surface = pg.image.load("assets/pipe-green.png").convert()
 PIPE_IMAGE_SCALAR = (52, 400)
@@ -88,19 +112,27 @@ while True:
             if event.key == pg.K_SPACE and game_active:
                 #print("flap")
                 bird_movement = 0
-                bird_movement -=12
+                bird_movement -= 12
 
             if event.key == pg.K_SPACE and game_active == False:
                 game_active = True
                 pipe_list.clear()
                 bird_rect.center = (45, 350)
                 bird_movement = 0
+                score = 0
 
 
         if event.type == SPANPIPES:
             # print("span")
             pipe_list.extend(create_pipe())
             # print(pipe_list)
+
+        if event.type == BIRDFLAP:
+            if bird_index < 2:
+                bird_index += 1
+            else:
+                bird_index = 0
+            bird_surface, bird_rect = bird_animation()
 
 
     window.blit(bg_surface, (0,0))
@@ -120,6 +152,8 @@ while True:
         pipe_list = move_pipes(pipe_list)
         draw_pipes(pipe_list)
         game_active = check_collision(pipe_list)
+        score += 0.01
+        score_display()
 
 
 
